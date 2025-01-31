@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pepe Coin Adventure</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body { font-family: Arial; background: #1a1a1a; color: #00ff00; text-align: center; }
+        #pepe { width: 200px; cursor: pointer; }
+        button { background: #00ff00; color: black; padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Pepe Coin Adventure 🐸</h1>
+    <div id="auth">
+        <input type="email" id="email" placeholder="Correo">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button onclick="signUp()">Registrarse</button>
+        <button onclick="signIn()">Iniciar Sesión</button>
+    </div>
+    <div id="game" style="display: none;">
+        <h2>Valor de PEPE: $<span id="value">0.000001</span></h2>
+        <img id="pepe" src="https://i.imgur.com/9JZ4Qxj.png" onclick="clickPepe()">
+        <h3>PEPE Coins: <span id="coins">0</span></h3>
+        <button onclick="saveProgress()">Guardar Progreso</button>
+        <button onclick="signOut()">Cerrar Sesión</button>
+    </div>
+
+    <script>
+        // Configuración de Firebase (REMPLAZA CON TUS DATOS)
+        const firebaseConfig = {
+            apiKey: "AIzaSyAIbhRf-I5LthnxpxC8fNFJPiTZNxw0zCQ",
+            authDomain: "pepecoingame.firebaseapp.com",
+            projectId: "pepecoingame",
+            storageBucket: "pepecoingame.firebasestorage.app",
+            messagingSenderId: "180617853226",
+            appId: "1:180617853226:web:5ee287248d3de428ec4653"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let pepeValue = 0.000001;
+        let pepeCoins = 0;
+
+        // Registro de usuario
+        function signUp() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then(() => loadProgress())
+                .catch(error => alert("Error: " + error.message));
+        }
+
+        // Inicio de sesión
+        function signIn() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then(() => loadProgress())
+                .catch(error => alert("Error: " + error.message));
+        }
+
+        // Cargar progreso
+        function loadProgress() {
+            const user = firebase.auth().currentUser;
+            db.collection("users").doc(user.uid).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        pepeValue = doc.data().pepeValue;
+                        pepeCoins = doc.data().pepeCoins;
+                        updateUI();
+                    }
+                    document.getElementById('auth').style.display = 'none';
+                    document.getElementById('game').style.display = 'block';
+                });
+        }
+
+        // Guardar progreso
+        function saveProgress() {
+            const user = firebase.auth().currentUser;
+            db.collection("users").doc(user.uid).set({
+                pepeValue: pepeValue,
+                pepeCoins: pepeCoins
+            }).then(() => alert("¡Progreso guardado!"));
+        }
+
+        // Click en Pepe
+        function clickPepe() {
+            pepeCoins++;
+            pepeValue += 0.000001;
+            updateUI();
+        }
+
+        // Actualizar pantalla
+        function updateUI() {
+            document.getElementById('value').textContent = pepeValue.toFixed(6);
+            document.getElementById('coins').textContent = pepeCoins;
+        }
+
+        // Cerrar sesión
+        function signOut() {
+            firebase.auth().signOut();
+            location.reload();
+        }
+    </script>
+</body>
+</html>
